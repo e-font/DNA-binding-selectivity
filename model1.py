@@ -38,8 +38,16 @@ def q_best_match(h, e_match, e_no_match, b):
             num_of_bests += 1
             not_best = item[1]
 
-    q =  num_of_bests * nm.exp(-1 * (e_match * best + e_no_match * not_best) * b)
-    #print 'q: ', q
+    q = num_of_bests * nm.exp(-1 * (e_match * best + e_no_match * not_best) * b)
+    return q
+
+def q_perfect_match(hams, l, e_match, b):
+    num_of_match = 0
+    for item in hams:
+        if item[1] == 0:
+            num_of_match += 1
+    q = num_of_match * nm.exp(-1 * (e_match * l) * b)
+    # print num_of_match
     return q
 
 
@@ -58,7 +66,7 @@ def high_beta_approx(b, e_match, e_no_match, occurr_lst, bases_lst):
 
 def low_beta_approx(b, e_match, e_no_match, occurr_lst, bases_lst):
     p = prob_tot(occurr_lst, bases_lst)
-    return p*(1-n*e_match*b)/(1-p-e_no_match*b*(sum(float(bases_lst[1,i])*occurr_lst[i] for i in range(4))-n*p))
+    return p*(1-l*e_match*b)/(1-p-e_no_match*b*(sum(float(bases_lst[1,i])*occurr_lst[i] for i in range(4))-l*p))
 
 
 def factorized_part_func(b, bases_lst, e_match, e_no_match, occurr_lst):
@@ -74,35 +82,49 @@ def factorized_selectivity(b, bases_lst, e_match, e_no_match, occurr_lst):
     q = factorized_q(b, bases_lst, e_match, e_no_match, occurr_lst)
     return selectivity(z, q)
 
-def correction_selectivity(s, p_match, N)
+def correction_selectivity(s, p_match, N_g, l):
+    return s * (1. + (p_match * (N_g - l)) ** -1.)
 
 if __name__ == '__main__':
     BASES = nm.array([['A', 'T', 'C', 'G'], [0.2922, 0.2928, 0.2074, 0.2076]])
     #BASES = nm.array([['A', 'T', 'C', 'G'], [0.25, 0.25, 0.25, 0.25]])
-    n = 3
-    N = 100000
+    l = 10
+    N_g = 100000
     E_MATCH = -1.
     E_NO_MATCH = 0.
 
     beta_min = 0
-    beta_max = 10
-    beta_num = 100
+    beta_max = 1
+    beta_num = 10
     x = nm.linspace(beta_min, beta_max, num=beta_num)
-    source_sequence = rnd.choice(BASES[0], size=n, p=map(lambda x: float(x), BASES[1]))
-    target_sequence = rnd.choice(BASES[0], size=N, p=map(lambda x: float(x), BASES[1]))
+    source_sequence = rnd.choice(BASES[0], size=l, p=map(lambda x: float(x), BASES[1]))
+    target_sequence = rnd.choice(BASES[0], size=N_g, p=map(lambda x: float(x), BASES[1]))
+    target_sequence = nm.concatenate((source_sequence, target_sequence))
+
     occurrences = map(lambda b: sum(b == j for j in source_sequence), BASES[0])
     h = hamiltonians(source_sequence, target_sequence)
 
-    Y = nm.vectorize(lambda x: selectivity(partition_func(h, E_MATCH, E_NO_MATCH, x), q_best_match(h, E_MATCH, E_NO_MATCH, x)))(x)
+    #Y = nm.vectorize(lambda x: selectivity(partition_func(h, E_MATCH, E_NO_MATCH, x), q_best_match(h, E_MATCH, E_NO_MATCH, x)))(x)
+    Y = nm.vectorize(
+        lambda x: selectivity(partition_func(h, E_MATCH, E_NO_MATCH, x), q_perfect_match(h, l, E_MATCH, x)))(x)
     y = nm.vectorize(lambda x: factorized_selectivity(x, BASES, E_MATCH, E_NO_MATCH, occurrences))(x)
-    h = nm.vectorize(lambda x: high_beta_approx(x, E_MATCH, E_NO_MATCH, occurrences, BASES))(x)
-    l = nm.vectorize(lambda x: low_beta_approx(x, E_MATCH, E_NO_MATCH, occurrences, BASES))(x)
-    fig, ax = plt.subplots()
 
-    ax.plot(x, Y/y, '-r', label='sym/factorized')
-    ax.plot(x, Y/l, '-g', label='sym/low-beta approx.')
-    ax.plot(x, Y/h, '-b', label='sym/high-beta approx.')
+    # h = nm.vectorize(lambda x: high_beta_approx(x, E_MATCH, E_NO_MATCH, occurrences, BASES))(x)
+    # l = nm.vectorize(lambda x: low_beta_approx(x, E_MATCH, E_NO_MATCH, occurrences, BASES))(x)
+    # fig, ax = plt.subplots()
+    #
+    # ax.plot(x, Y/y, '-r', label='sym/factorized')
+    # ax.plot(x, Y/l, '-g', label='sym/low-beta approx.')
+    # ax.plot(x, Y/h, '-b', label='sym/high-beta approx.')
+    # legend = ax.legend(loc='lower right', shadow=False)
+    # plt.ylim(0., 1.2)
+    # plt.title('Model 1: n=3, N=10^5, p=genome')
+    # plt.show()
+    p = prob_tot(occurrences, BASES)
+    y1 = nm.vectorize(lambda x: correction_selectivity(x, p, N_g, l))(y)
+    fig, ax = plt.subplots()
+    ax.plot(x, Y, '-r', label='actual')
+    ax.plot(x, y, '-g', label='without correction')
+    ax.plot(x, y1, '-b', label='with correction')
     legend = ax.legend(loc='lower right', shadow=False)
-    plt.ylim(0., 1.2)
-    plt.title('Model 1: n=3, N=10^5, p=genome')
     plt.show()
