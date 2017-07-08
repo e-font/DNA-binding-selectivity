@@ -74,12 +74,13 @@ def factorized_selectivity(b, bases_lst, e_match, e_no_match, occurr_lst):
     q = factorized_q(b, bases_lst, e_match, e_no_match, occurr_lst)
     return selectivity(z, q)
 
+def correction_selectivity(s, p_match, N)
+
 if __name__ == '__main__':
     BASES = nm.array([['A', 'T', 'C', 'G'], [0.2922, 0.2928, 0.2074, 0.2076]])
     #BASES = nm.array([['A', 'T', 'C', 'G'], [0.25, 0.25, 0.25, 0.25]])
     n = 3
-    N = [100000]
-    trials = range(1)
+    N = 100000
     E_MATCH = -1.
     E_NO_MATCH = 0.
 
@@ -87,53 +88,21 @@ if __name__ == '__main__':
     beta_max = 10
     beta_num = 100
     x = nm.linspace(beta_min, beta_max, num=beta_num)
-    # Y = nm.zeros()
-    for i in N:
-        y = []
-        Y = []
-        #print i
-        for j in trials:
-            source_sequence = rnd.choice(BASES[0], size=n, p=map(lambda x: float(x), BASES[1]))
-            target_sequence = rnd.choice(BASES[0], size=i, p=map(lambda x: float(x), BASES[1]))
-            #print source_sequence, target_sequence
+    source_sequence = rnd.choice(BASES[0], size=n, p=map(lambda x: float(x), BASES[1]))
+    target_sequence = rnd.choice(BASES[0], size=N, p=map(lambda x: float(x), BASES[1]))
+    occurrences = map(lambda b: sum(b == j for j in source_sequence), BASES[0])
+    h = hamiltonians(source_sequence, target_sequence)
 
-            #test functions
-            occurrences = map(lambda b: sum(b == j for j in source_sequence), BASES[0])
+    Y = nm.vectorize(lambda x: selectivity(partition_func(h, E_MATCH, E_NO_MATCH, x), q_best_match(h, E_MATCH, E_NO_MATCH, x)))(x)
+    y = nm.vectorize(lambda x: factorized_selectivity(x, BASES, E_MATCH, E_NO_MATCH, occurrences))(x)
+    h = nm.vectorize(lambda x: high_beta_approx(x, E_MATCH, E_NO_MATCH, occurrences, BASES))(x)
+    l = nm.vectorize(lambda x: low_beta_approx(x, E_MATCH, E_NO_MATCH, occurrences, BASES))(x)
+    fig, ax = plt.subplots()
 
-            #actual code
-            h = hamiltonians(source_sequence, target_sequence)
-            #z = lambda b: partition_func(h, E_MATCH, E_NO_MATCH, b)
-            #Z = nm.vectorize(lambda b: (factorized_part_func(b, BASES, E_MATCH, E_NO_MATCH, occurrences)))
-
-            # for beta in x:
-            #    S = factorized_selectivity(beta, BASES, E_MATCH, E_NO_MATCH, occurrences)
-            #    Y.append(S)
-
-            # print y.shape, Y.shape
-             #   print s
-            # print y[0]
-                #, y[-1]
-            # print p, p/(1.-p)
-            # print x.shape, Z(x).shape
-            # print z(x), Z(x)
-            # plt.plot(x, map(lambda i, j: i/j, y, Y))
-            Y = nm.vectorize(lambda x: selectivity(partition_func(h, E_MATCH, E_NO_MATCH, x), q_best_match(h, E_MATCH, E_NO_MATCH, x)))(x)
-            y = nm.vectorize(lambda x: factorized_selectivity(x, BASES, E_MATCH, E_NO_MATCH, occurrences))(x)
-            h = nm.vectorize(lambda x: high_beta_approx(x, E_MATCH, E_NO_MATCH, occurrences, BASES))(x)
-            l = nm.vectorize(lambda x: low_beta_approx(x, E_MATCH, E_NO_MATCH, occurrences, BASES))(x)
-            fig, ax = plt.subplots()
-
-            ax.plot(x, Y/y, '-r', label='sym/factorized')
-            ax.plot(x, Y/l, '-g', label='sym/low-beta approx.')
-            ax.plot(x, Y/h, '-b', label='sym/high-beta approx.')
-            legend = ax.legend(loc='lower right', shadow=False)
-            plt.ylim(0., 1.2)
-            plt.title('Model 1: n=3, N=10^5, p=genome')
-            plt.show()
-
-
-        #Y = nm.append(Y, y, axis=0)
-    # for y in Y:
-    #     plt.plot(x, y)
-    # plt.show()
-    #print Y
+    ax.plot(x, Y/y, '-r', label='sym/factorized')
+    ax.plot(x, Y/l, '-g', label='sym/low-beta approx.')
+    ax.plot(x, Y/h, '-b', label='sym/high-beta approx.')
+    legend = ax.legend(loc='lower right', shadow=False)
+    plt.ylim(0., 1.2)
+    plt.title('Model 1: n=3, N=10^5, p=genome')
+    plt.show()
