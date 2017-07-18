@@ -1,7 +1,9 @@
 import numpy as nm
+import scipy as sci
 from numpy import random as rnd
 import matplotlib.pyplot as plt
 import model1
+import defect_approx
 
 def defect_count(src_seq, tar_seq):
     hams = nm.array(model1.hamiltonians(src_seq, tar_seq))
@@ -31,7 +33,7 @@ def avg_defects_approx1(base, bases, e_match, e_not_match, beta):
 if __name__ == '__main__':
     # BASES = nm.array([['A', 'T', 'C', 'G'], [0.2922, 0.2928, 0.2074, 0.2076]])
     BASES = nm.array([['A', 'T', 'C', 'G'], [0.25, 0.25, 0.25, 0.25]])
-    beta = 10.
+    beta = 1.
     n = 30
     N = 100000
     E_MATCH = -1.
@@ -48,9 +50,8 @@ if __name__ == '__main__':
     y = defects * nm.exp(-1. * beta * (E_MATCH * (n - x) + E_NO_MATCH * x))
     z = y.sum()
     avg = n * nm.average(x * y / z)
-
     # print y[round(avg)], z
-    approx = sum(avg_defects_approx1(b, BASES, E_MATCH, E_NO_MATCH, beta) for b in BASES[0]) * n
+    approx = sum(avg_defects_approx1(b, BASES, E_MATCH, E_NO_MATCH, beta) for b in BASES[0])
     print avg, approx
 
     plt.plot(x, y)

@@ -3,7 +3,7 @@ import model1
 import matplotlib.pyplot as plt
 import re
 
-A = 5
+A = 1
 bases = ['A', 'T', 'C', 'G']
 pairs = nm.array([[p + q for q in bases] for p in bases])
 
@@ -41,34 +41,58 @@ def seq_analyse(seq):
                     prob_matrix[j, k] += 1
                     break
     prob_matrix = prob_matrix / float(prob_matrix.sum())
-    print prob_matrix
     return prob_matrix
 
 if A == 1:
-    n = 5.
-    n_2 = 5.
-    n_1 = 0.
-    n_0 = n - n_2 - n_1
+    anomaly = (2, 3)
+    e_match = -1.
+    e_no_match = 0.
+    l = 3  # Number of pairs in t
 
-    d = -0.8
-    w_0 = lambda i: z_0(i, n)
-    w = lambda i: z(x, d, n_2, n_1, n_0)
-    x = nm.linspace(0, 0.2)
-    y_0 = nm.vectorize(lambda i: model1.selectivity(w_0(i), q_0(i, n)))
-    y = nm.vectorize(lambda i: model1.selectivity(w(i), q(i, d, n_2, n_1, n_0)))
+    a = pairs[anomaly] * l
+    b = 'CA' * l
+    c = 'AA' * l
 
-    plt.plot(x, w_0(x), x, w(x))
-    plt.show()
-
-if A == 2:
+    N = 1000000 #Number of bases in g
     P = nm.full((4, 4), 1/16.)
-    P[3, 2] -= 0.01
-    P[2, 3] += 0.01
-    s = ''
-    for i in range(100000):
-        s += random_pair()
-    print P
-    seq_analyse(s)
+    d = -0.5
+    P += (-1. * d) / (15. * 16.)
+    P[anomaly] += d / (15. * 16.) + d / 16. #CG
+    g = ''
+    for i in range(N / 2):
+        g += random_pair(P)
+
+    #print P, seq_analyse(g)
+    z_a = lambda i: z(i, d, l, 0, 0)
+    z_b = lambda i: z(i, d, 0, l, 0)
+    z_c = lambda i: z(i, d, 0, 0, l)
+
+    h_a = model1.hamiltonians(list(a), list(g), step=2)
+    h_b = model1.hamiltonians(list(b), list(g), step=2)
+    h_c = model1.hamiltonians(list(c), list(g), step=2)
+
+    Y_a = nm.vectorize(lambda i: model1.selectivity(model1.partition_func(h_a, e_match, e_no_match, i),
+                                                    model1.q_perfect_match(h_a, l*2, e_match, i)))
+    Y_b = nm.vectorize(lambda i: model1.selectivity(model1.partition_func(h_b, e_match, e_no_match, i),
+                                                    model1.q_perfect_match(h_b, l*2, e_match, i)))
+    Y_c = nm.vectorize(lambda i: model1.selectivity(model1.partition_func(h_c, e_match, e_no_match, i),
+                                                    model1.q_perfect_match(h_c, l*2, e_match, i)))
+
+    y_a = nm.vectorize(lambda i: model1.selectivity(z_a(i), q(i, d, l, 0, 0)))
+    y_b = nm.vectorize(lambda i: model1.selectivity(z_b(i), q(i, d, 0, l, 0)))
+    y_c = nm.vectorize(lambda i: model1.selectivity(z_c(i), q(i, d, 0, 0, l)))
+
+    x = nm.linspace(0, 10)
+
+    f, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
+    f.suptitle('n_g = 10^6, d = -0.5')
+    ax1.set_title('All matching pairs')
+    ax1.plot(x, Y_a(x), x, y_a(x))
+    ax2.set_title('One base per pair')
+    ax2.plot(x, Y_b(x), x, y_b(x))
+    ax3.set_title('No matching bases')
+    ax3.plot(x, Y_c(x), x, y_c(x))
+    plt.show()
 
 if A == 3:
     path = 'C:\Users\Enrico\Downloads\\'

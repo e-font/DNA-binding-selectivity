@@ -9,11 +9,11 @@ from numpy import random as rnd
 import matplotlib.pyplot as plt
 
 
-def hamiltonians(source_seq, target_seq):
+def hamiltonians(source_seq, target_seq, step=1):
     lst = []
     len_src = nm.size(source_seq)
     len_tar = nm.size(target_seq)
-    for i in range(len_tar - len_src):
+    for i in range(0, len_tar - len_src, step):
         m = 0
         for j in range(len_src):
             if target_seq[i + j] == source_seq[j]:
