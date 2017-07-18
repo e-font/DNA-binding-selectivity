@@ -3,7 +3,7 @@ import model1
 import matplotlib.pyplot as plt
 import re
 
-A = 4
+A = 5
 bases = ['A', 'T', 'C', 'G']
 pairs = nm.array([[p + q for q in bases] for p in bases])
 
@@ -25,18 +25,24 @@ def q(x, d, n_2, n_1, n_0):
     return q_0(x, n_2 + n_1 + n_0) * (1. + d) ** n_2 * (1. - (d/15.)) ** (n_1 + n_0)
 
 
-def random_pair():
+def random_pair(P):
     i = nm.random.choice(range(4), 1, p=nm.sum(P, axis=1))[0]
     j = nm.random.choice(range(4), 1, p=P[i] / nm.sum(P[i]))[0]
     return pairs[i, j]
 
+
 def seq_analyse(seq):
     prob_matrix = nm.zeros(pairs.shape)
     for i in range(0, len(seq), 2):
-        print i
         pair = seq[i] + seq[i + 1]
-        prob_matrix[nm.where(pair == pairs)] += 2./len(seq)
+        for j, row in enumerate(pairs):
+            for k, p in enumerate(row):
+                if pair == p:
+                    prob_matrix[j, k] += 1
+                    break
+    prob_matrix = prob_matrix / float(prob_matrix.sum())
     print prob_matrix
+    return prob_matrix
 
 if A == 1:
     n = 5.
@@ -73,8 +79,14 @@ if A == 3:
         outfile.writelines(lines)
 
 if A == 4:
-    s = ''
     filename = 'hs_ref_GRCh38.p7_chr5.txt'
-    with open(filename, 'r') as file:
+    outfilename = 'prob_matrix.txt'
+    with open(filename, 'r') as file, open(outfilename, 'w') as outfile:
         s = file.read()
-    seq_analyse(s)
+        m = seq_analyse(s)
+        outfile.write(str(m))
+
+if A == 5:
+    filename = 'prob_matrix.txt'
+    m = nm.loadtxt(filename)
+    print m
