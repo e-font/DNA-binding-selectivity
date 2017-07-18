@@ -41,7 +41,7 @@ if __name__ == '__main__':
     target_sequence = rnd.choice(BASES[0], size=N, p=map(lambda x: float(x), BASES[1]))
 
     occurrences = map(lambda b: sum(b == j for j in source_sequence), BASES[0])
-    print occurrences[0]
+    #print occurrences[0]
 
     defects = nm.array(defect_count(source_sequence, target_sequence))
     x = nm.arange(n)
