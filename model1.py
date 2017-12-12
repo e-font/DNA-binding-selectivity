@@ -86,45 +86,54 @@ def correction_selectivity(s, p_match, N_g, l):
     return s * (1. + (p_match * (N_g - l)) ** -1.)
 
 if __name__ == '__main__':
+    A = 2
+
     BASES = nm.array([['A', 'T', 'C', 'G'], [0.2922, 0.2928, 0.2074, 0.2076]])
-    #BASES = nm.array([['A', 'T', 'C', 'G'], [0.25, 0.25, 0.25, 0.25]])
+    # BASES = nm.array([['A', 'T', 'C', 'G'], [0.25, 0.25, 0.25, 0.25]])
     l = 10
-    N_g = 100000
+    N_g = 10 ** 5
     E_MATCH = -1.
     E_NO_MATCH = 0.
 
-    beta_min = 0
-    beta_max = 1
-    beta_num = 10
-    x = nm.linspace(beta_min, beta_max, num=beta_num)
     source_sequence = rnd.choice(BASES[0], size=l, p=map(lambda x: float(x), BASES[1]))
     target_sequence = rnd.choice(BASES[0], size=N_g, p=map(lambda x: float(x), BASES[1]))
-    target_sequence = nm.concatenate((source_sequence, target_sequence))
-
-    occurrences = map(lambda b: sum(b == j for j in source_sequence), BASES[0])
+    # target_sequence = nm.concatenate((source_sequence, target_sequence))
     h = hamiltonians(source_sequence, target_sequence)
+    occurrences = map(lambda b: sum(b == j for j in source_sequence), BASES[0])
 
-    #Y = nm.vectorize(lambda x: selectivity(partition_func(h, E_MATCH, E_NO_MATCH, x), q_best_match(h, E_MATCH, E_NO_MATCH, x)))(x)
-    Y = nm.vectorize(
-        lambda x: selectivity(partition_func(h, E_MATCH, E_NO_MATCH, x), q_perfect_match(h, l, E_MATCH, x)))(x)
-    y = nm.vectorize(lambda x: factorized_selectivity(x, BASES, E_MATCH, E_NO_MATCH, occurrences))(x)
+    if A == 1:
+        beta_min = 0
+        beta_max = 1
+        beta_num = 10
+        x = nm.linspace(beta_min, beta_max, num=beta_num)
 
-    # h = nm.vectorize(lambda x: high_beta_approx(x, E_MATCH, E_NO_MATCH, occurrences, BASES))(x)
-    # l = nm.vectorize(lambda x: low_beta_approx(x, E_MATCH, E_NO_MATCH, occurrences, BASES))(x)
-    # fig, ax = plt.subplots()
-    #
-    # ax.plot(x, Y/y, '-r', label='sym/factorized')
-    # ax.plot(x, Y/l, '-g', label='sym/low-beta approx.')
-    # ax.plot(x, Y/h, '-b', label='sym/high-beta approx.')
-    # legend = ax.legend(loc='lower right', shadow=False)
-    # plt.ylim(0., 1.2)
-    # plt.title('Model 1: n=3, N=10^5, p=genome')
-    # plt.show()
-    p = prob_tot(occurrences, BASES)
-    y1 = nm.vectorize(lambda x: correction_selectivity(x, p, N_g, l))(y)
-    fig, ax = plt.subplots()
-    ax.plot(x, Y, '-r', label='actual')
-    ax.plot(x, y, '-g', label='without correction')
-    ax.plot(x, y1, '-b', label='with correction')
-    legend = ax.legend(loc='lower right', shadow=False)
-    plt.show()
+        #Y = nm.vectorize(lambda x: selectivity(partition_func(h, E_MATCH, E_NO_MATCH, x), q_best_match(h, E_MATCH, E_NO_MATCH, x)))(x)
+        Y = nm.vectorize(
+            lambda x: selectivity(partition_func(h, E_MATCH, E_NO_MATCH, x), q_perfect_match(h, l, E_MATCH, x)))(x)
+        y = nm.vectorize(lambda x: factorized_selectivity(x, BASES, E_MATCH, E_NO_MATCH, occurrences))(x)
+
+        # h = nm.vectorize(lambda x: high_beta_approx(x, E_MATCH, E_NO_MATCH, occurrences, BASES))(x)
+        # l = nm.vectorize(lambda x: low_beta_approx(x, E_MATCH, E_NO_MATCH, occurrences, BASES))(x)
+        # fig, ax = plt.subplots()
+        #
+        # ax.plot(x, Y/y, '-r', label='sym/factorized')
+        # ax.plot(x, Y/l, '-g', label='sym/low-beta approx.')
+        # ax.plot(x, Y/h, '-b', label='sym/high-beta approx.')
+        # legend = ax.legend(loc='lower right', shadow=False)
+        # plt.ylim(0., 1.2)
+        # plt.title('Model 1: n=3, N=10^5, p=genome')
+        # plt.show()
+
+        p = prob_tot(occurrences, BASES)
+        y1 = nm.vectorize(lambda x: correction_selectivity(x, p, N_g, l))(y)
+        fig, ax = plt.subplots()
+        ax.plot(x, Y, '-r', label='actual')
+        ax.plot(x, y, '-g', label='without correction')
+        ax.plot(x, y1, '-b', label='with correction')
+        legend = ax.legend(loc='lower right', shadow=False)
+        plt.show()
+    if A == 2:
+        beta = 1
+        z_comp = partition_func(h, E_MATCH, E_NO_MATCH, beta)
+        z_math = factorized_part_func(beta, BASES, E_MATCH, E_NO_MATCH, occurrences)
+        print z_comp, z_math, occurrences
