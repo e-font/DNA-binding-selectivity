@@ -5,12 +5,12 @@ import matplotlib.pyplot as plt
 bases = [0, 1, 2, 3]
 p_distr = nm.full((4,), 1 / 4.)
 
-#energies = rnd.uniform(0.9, 1.1, (16, 16))
-#energies = energies + energies.T
+energies = rnd.normal(0.5, 0.1, (16, 16))
+energies = energies + energies.T
 #energies = nm.full((16, 16), 1.)
-#nm.fill_diagonal(energies, 0)
-#energies[2 * 4 + 1][2 * 4 + 1] = -.1  # Corresponds to (2,1) = GC pair
-energies = nm.loadtxt("energies1.txt")
+nm.fill_diagonal(energies, 0)
+energies[2 * 4 + 1][2 * 4 + 1] = -.1  # Corresponds to (2,1) = GC pair
+#energies = nm.rot90(nm.loadtxt("energies1.txt"))
 
 def random_seq(l):
     return rnd.choice(bases, size=l, p=p_distr)
@@ -38,11 +38,11 @@ def q_match(t_seq):
 
 def selectivity(t_seq, step_size=2):
     z = part_func(t_seq)
-    q = q_match(t_seq)
+    #q = q_match(t_seq)
     if step_size == 1:
         z += part_func(t_seq[1:-1])
-        q += q_match(t_seq[1:-1])
-    return 1. / (z / q - 1.)
+        #q += q_match(t_seq[1:-1])
+    return z
 
 
 def entropy(t_seq):
@@ -57,17 +57,24 @@ def entropy(t_seq):
 
 
 s = []
-t = nm.array([0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
-
-for i in range(10 ** 5):
-    s.append(nm.log(selectivity(rnd.permutation(t), step_size=1)))
+t = nm.array([0, 1,2,2, 2, 2, 2,3,3,3,3,3, 3, 3, 3, 3])
+t1 = (t + 1) % 4
+t2 = (t + 2) % 4
+t3 = (t + 3) % 4
+for i in range(10 ** 4):
+    s.append(nm.log(selectivity(rnd.permutation(t), step_size=2)))
+    s.append(nm.log(selectivity(rnd.permutation(t1), step_size=2)))
+    s.append(nm.log(selectivity(rnd.permutation(t2), step_size=2)))
+    s.append(nm.log(selectivity(rnd.permutation(t3), step_size=2)))
 
 # nm.save("10^6_t_20_RAW", s)
 # print sorted(s, reverse=True)
-h = nm.histogram(s, bins=100)
+#h = nm.histogram(s, bins=100)
 #print h[1]
 # nm.savetxt("10^5_t_20_perm_0001_anomaly.csv", h[0], delimiter=';')
-#plt.hist(s, bins=100)
-#plt.show()
-plt.plot(nm.real(nm.fft.fft(h[0])))
+plt.ylabel('Frequency')
+plt.xlabel('ln selectivity')
+plt.title('Permutated array, step = 1. (Real energies)')
+plt.hist(s, bins=100)
 plt.show()
+
