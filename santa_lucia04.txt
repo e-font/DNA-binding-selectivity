@@ -1,3 +1,5 @@
+#Raw santa lucia energies matrix, as inferred from the 2004 paper. Includes Watson-Crick energies (on diagonal).
+#Rows are first base pair, columns are second base pair.
 #AA	AC	AG	AT	CA	CC	CG	CT	GA	GC	GG	GT	TA	TC	TG	TT
 0	0	0	0	0	0	0	0	0	0	0	0	0.61	0.88	0.14	-1.00
 0	0	0	0	0	0	0	0	0	0	0	0	0.77	1.33	-1.45	0.64
@@ -16,6 +18,6 @@
 0.74	-1.44	0.44	0.43	0	0	0	0	0	0	0	0	0	0	0	0
 -1.00	0.75	0.34	0.68	0	0	0	0	0	0	0	0	0	0	0	0
 #
-#MISSING	INFO	AC/TG	AG/TC	and	reverses.	Using	CA/GT	and	GA/CT	and	reverses	instead
+#NB : MISSING energies for  AC/TG and AG/TC , and reverses. Using CA/GT and GA/CT and reverses instead.
 
 
